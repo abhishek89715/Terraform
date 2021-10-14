@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password \ --region ap-south-1 \ | docker login \ --username AWS \ --password-stdin 196560252427.dkr.ecr.ap-south-1.amazonaws.com
+  build:
+    commands:
+      - docker build -t 196560252427.dkr.ecr.ap-south-1.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION .
+  post_build:
+    commands:
+      # push
+      - docker tag 196560252427.dkr.ecr.ap=south-1.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION 196560252427.dkr.ecr.ap-south-1.amazonaws.com/$IMAGE_REPO_NAME:latest
+      - docker push 196560252427.dkr.ecr.ap-south-1.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - docker push 196560252427.dkr.ecr.ap-south-1.amazonaws.com/$IMAGE_REPO_NAME:latest
+      # create new task definition
+      - ./create-new-task-def.sh $IMAGE_REPO_NAME
+
+artifacts:
+  files:
+    - 'appspec.yaml'
+    - 'taskdef.json'
